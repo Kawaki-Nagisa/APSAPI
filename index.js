@@ -5,35 +5,50 @@ const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
 
-const MONTHLY_CONSUMPTION_WEIGHTS = {
-  January: 7.13,
-  February: 6.19,
-  March: 5.35,
-  April: 5.48,
-  May: 7.15,
-  June: 10.09,
-  July: 14.13,
-  August: 14.17,
-  September: 11.62,
-  October: 8.43,
-  November: 4.74,
-  December: 5.52
-};
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December"
+];
 
-const MONTHLY_SOLAR_PERCENTAGES = {
-  January: 7.31,
-  February: 10.90,
-  March: 12.23,
-  April: 13.22,
-  May: 13.67,
-  June: 15.23,
-  July: 15.11,
-  August: 14.15,
-  September: 10.80,
-  October: 6.93,
-  November: 5.01,
-  December: 4.46
-};
+// const MONTHLY_CONSUMPTION_WEIGHTS = {
+//   January: 7.13,
+//   February: 6.19,
+//   March: 5.35,
+//   April: 5.48,
+//   May: 7.15,
+//   June: 10.09,
+//   July: 14.13,
+//   August: 14.17,
+//   September: 11.62,
+//   October: 8.43,
+//   November: 4.74,
+//   December: 5.52
+// };
+
+// const MONTHLY_SOLAR_PERCENTAGES = {
+//   January: 7.31,
+//   February: 10.90,
+//   March: 12.23,
+//   April: 13.22,
+//   May: 13.67,
+//   June: 15.23,
+//   July: 15.11,
+//   August: 14.15,
+//   September: 10.80,
+//   October: 6.93,
+//   November: 5.01,
+//   December: 4.46
+// };
 
 const PEAK_SOLAR_FACTORS = {
   January: 0.0443,
@@ -133,7 +148,7 @@ function getServiceCharge(ampService) {
 }
 
 app.post('/api/calculate', (req, res) => {
-  const { annualConsumption, solarGeneration, batteryCapacity, ampService } = req.body;
+  const { batteryCapacity, ampService,monthlyConsumption,monthlySolarGeneration } = req.body;
 
   // Assume 22 days per month for battery calculation as per the example
   const DAYS_PER_MONTH = 22;
@@ -145,14 +160,18 @@ app.post('/api/calculate', (req, res) => {
   let totalOffPeak = 0;
   let totalDemand = 0;
   let totalCredits = 0;
+  let annualConsumption = 0;
+  let solarGeneration = 0;
 
-  // Use 1 kW for demand calculation to match the screenshot
   
-  for (const month of Object.keys(MONTHLY_CONSUMPTION_WEIGHTS)) {
+  for (const month of MONTHS) {
     const demandKw = PEAK_DEMAND[month];
     //console.log(month);
-    const monthConsumption = annualConsumption * (MONTHLY_CONSUMPTION_WEIGHTS[month] / 100);
-    const monthSolar = solarGeneration * (MONTHLY_SOLAR_PERCENTAGES[month] / 100);
+    const monthConsumption = monthlyConsumption[month];
+    const monthSolar = monthlySolarGeneration[month]*1.2901;
+    annualConsumption += monthConsumption;
+    solarGeneration += monthlySolarGeneration[month]; 
+
 
     const season = getSeasonForMonth(month);
     const rateObj = RATES[season];
