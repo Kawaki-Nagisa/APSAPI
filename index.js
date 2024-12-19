@@ -20,36 +20,6 @@ const MONTHS = [
   "December"
 ];
 
-// const MONTHLY_CONSUMPTION_WEIGHTS = {
-//   January: 7.13,
-//   February: 6.19,
-//   March: 5.35,
-//   April: 5.48,
-//   May: 7.15,
-//   June: 10.09,
-//   July: 14.13,
-//   August: 14.17,
-//   September: 11.62,
-//   October: 8.43,
-//   November: 4.74,
-//   December: 5.52
-// };
-
-// const MONTHLY_SOLAR_PERCENTAGES = {
-//   January: 7.31,
-//   February: 10.90,
-//   March: 12.23,
-//   April: 13.22,
-//   May: 13.67,
-//   June: 15.23,
-//   July: 15.11,
-//   August: 14.15,
-//   September: 10.80,
-//   October: 6.93,
-//   November: 5.01,
-//   December: 4.46
-// };
-
 const PEAK_SOLAR_FACTORS = {
   January: 0.0443,
   February: 0.0679,
@@ -67,7 +37,7 @@ const PEAK_SOLAR_FACTORS = {
 
 const SEASONS = {
   WINTER: ['January', 'February', 'March', 'April', 'November', 'December'],
-  SUMMER: ['May', 'June','July','August', 'September', 'October'],
+  SUMMER: ['May', 'June', 'July', 'August', 'September', 'October'],
 };
 
 const RATES = {
@@ -92,19 +62,60 @@ const DEMAND_CHARGES = {
   ]
 };
 
-const PEAK_DEMAND = {
-  January: 1,
-  February: 1,
-  March: 1,
-  April: 1,
-  May: 3,
-  June: 3,
-  July: 4,
-  August: 4,
-  September: 3,
-  October: 3,
-  November: 1,
-  December: 1
+const DEMANDMATRIX = {
+  SUMMER: [
+    { yearly: 15000, noBattery: 6, values: [3, 1, 0, 0, 0, 0, 0, 0, 0] },
+    { yearly: 18000, noBattery: 7, values: [4, 2, 1, 0, 0, 0, 0, 0, 0] },
+    { yearly: 21000, noBattery: 8, values: [5, 3, 2, 1, 0, 0, 0, 0, 0] },
+    { yearly: 24000, noBattery: 9, values: [6, 4, 2, 1, 0, 0, 0, 0, 0] },
+    { yearly: 27000, noBattery: 10, values: [7, 5, 3, 2, 1, 0, 0, 0, 0] },
+    { yearly: 30000, noBattery: 11, values: [8, 6, 4, 3, 2, 1, 0, 0, 0] },
+    { yearly: 33000, noBattery: 12, values: [9, 7, 5, 4, 3, 2, 1, 0, 0] },
+    { yearly: 36000, noBattery: 13, values: [10, 8, 6, 5, 4, 3, 2, 1, 0] },
+    { yearly: 39000, noBattery: 14, values: [11, 9, 7, 6, 5, 4, 3, 2, 1] },
+    { yearly: 42000, noBattery: 15, values: [12, 10, 8, 7, 6, 5, 4, 3, 2] },
+    { yearly: 45000, noBattery: 16, values: [13, 11, 9, 8, 7, 6, 5, 4, 3] },
+    { yearly: 48000, noBattery: 17, values: [14, 12, 10, 9, 8, 7, 6, 5, 4] },
+    { yearly: 51000, noBattery: 18, values: [15, 13, 11, 10, 9, 8, 7, 6, 5] }
+  ],
+  WINTER: [
+    { yearly: 15000, noBattery: 3, values: [1, 0, 0, 0, 0, 0, 0, 0, 0] },
+    { yearly: 18000, noBattery: 4, values: [2, 1, 0, 0, 0, 0, 0, 0, 0] },
+    { yearly: 21000, noBattery: 5, values: [3, 1, 0, 0, 0, 0, 0, 0, 0] },
+    { yearly: 24000, noBattery: 6, values: [4, 2, 1, 0, 0, 0, 0, 0, 0] },
+    { yearly: 27000, noBattery: 7, values: [5, 3, 1, 0, 0, 0, 0, 0, 0] },
+    { yearly: 30000, noBattery: 8, values: [6, 4, 2, 1, 0, 0, 0, 0, 0] },
+    { yearly: 33000, noBattery: 9, values: [7, 5, 3, 2, 1, 0, 0, 0, 0] },
+    { yearly: 36000, noBattery: 11, values: [8, 6, 4, 3, 2, 1, 0, 0, 0] },
+    { yearly: 39000, noBattery: 12, values: [9, 7, 5, 4, 3, 2, 1, 0, 0] },
+    { yearly: 42000, noBattery: 13, values: [10, 8, 6, 5, 4, 3, 2, 1, 0] },
+    { yearly: 45000, noBattery: 14, values: [11, 9, 7, 6, 5, 4, 3, 2, 1] },
+    { yearly: 48000, noBattery: 16, values: [12, 10, 8, 7, 6, 5, 4, 3, 2] },
+    { yearly: 51000, noBattery: 16, values: [13, 11, 9, 8, 7, 6, 5, 4, 3] }
+  ]
+};
+
+function getDemandValue(totalConsumption, batteryCapacity, season) {
+  // Map battery capacities to their column index
+  const batteryCapacityMapping = [5, 10, 15, 20, 25, 30, 35, 40, 45];
+  const batteryIndex = batteryCapacityMapping.indexOf(batteryCapacity);
+
+  if (batteryIndex === -1) {
+    throw new Error("Invalid battery capacity. Choose from: 5, 10, 15, 20, 25, 30, 35, 40, 45.");
+  }
+
+  // Sort rows by yearly values to ensure proper comparison
+  const sortedRows = DEMANDMATRIX[season].sort((a, b) => a.yearly - b.yearly);
+
+  // Find the row with the nearest upper yearly value
+  const demandRow = sortedRows.find(row => row.yearly >= totalConsumption);
+
+  if (!demandRow) {
+    throw new Error(`No data found for total consumption of ${totalConsumption} in ${season} season.`);
+  }
+
+  // Return the value at the specific battery index
+  return demandRow.values[batteryIndex];
 }
 
 const SERVICE_CHARGES = {
@@ -112,11 +123,9 @@ const SERVICE_CHARGES = {
   201: 45.44   // > 200 Amp
 };
 
-// For winter (per given example), on-peak is 25% and off-peak is 75%.
 const ON_PEAK_PERCENT_WINTER = 0.2;
 const OFF_PEAK_PERCENT_WINTER = 0.8;
 
-// Simple function to determine the season for a given month
 function getSeasonForMonth(month) {
   if (SEASONS.WINTER.includes(month)) return 'WINTER';
   if (SEASONS.SUMMER.includes(month)) return 'SUMMER';
@@ -148,7 +157,7 @@ function getServiceCharge(ampService) {
 }
 
 app.post('/api/calculate', (req, res) => {
-  const { batteryCapacity, ampService,monthlyConsumption,monthlySolarGeneration } = req.body;
+  const { batteryCapacity, ampService,monthlyConsumption,monthlySolarGeneration,totalConsumption,totalSolarGeneration } = req.body;
 
   // Assume 22 days per month for battery calculation as per the example
   const DAYS_PER_MONTH = 22;
@@ -165,15 +174,15 @@ app.post('/api/calculate', (req, res) => {
 
   
   for (const month of MONTHS) {
-    const demandKw = PEAK_DEMAND[month];
-    //console.log(month);
+
     const monthConsumption = monthlyConsumption[month];
-    const monthSolar = monthlySolarGeneration[month]*1.2901;
+    const monthSolar = monthlySolarGeneration[month];
     annualConsumption += monthConsumption;
     solarGeneration += monthlySolarGeneration[month]; 
 
 
     const season = getSeasonForMonth(month);
+    const demandKw = getDemandValue(totalConsumption, batteryCapacity, season);
     const rateObj = RATES[season];
 
     let onPeakPercent;
