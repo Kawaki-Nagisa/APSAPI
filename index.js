@@ -215,7 +215,8 @@ app.post('/api/calculate', (req, res) => {
 
     const totalCreditThisMonth = onPeakCredit + offPeakCredit;
     const netAmount = (monthConsumption-monthSolar);
-    const solarCreds = netAmount * SOLAR_CREDIT_RATE;
+    const netAmountPostBattery = (monthConsumption-monthSolar-batteryMonthly);
+    const solarCreds = netAmountPostBattery * SOLAR_CREDIT_RATE;
     totalServiceCharge += serviceCharge;
     totalOnPeak += onPeakCost;
     totalOffPeak += offPeakCost;
